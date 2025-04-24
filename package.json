@@ -1,0 +1,35 @@
+{
+   "type": "module",
+   "scripts": {
+      "dev": "nodemon --watch src --ext ts --exec tsx src/index.ts",
+      "db:start": "npx supabase start -x edge-runtime,logflare,vector,imgproxy,storage-api",
+      "db:migrate": "npx supabase db diff -f",
+      "db:stop": "npx supabase stop",
+      "db:restart": "npm run db:stop && npm run db:start",
+      "db:reset": "npx supabase db reset",
+      "db:push": "npx supabase db push",
+      "db:pull": "npx supabase db pull --schema auth,public",
+      "db:push-config": "npx supabase config push",
+      "db:seed-local": "npx tsx --env-file=.env.local seeds/seed.ts",
+      "db:seed-remote": "npx tsx --env-file=.env.production seeds/seed-data.ts",
+      "db:sync-local": "(npx @snaplet/seed sync || true) && npx supabase gen types --local > src/types/supabase.ts",
+      "db:sync-remote": "(npx supabase db pull --schema auth,public || true) && (npx @snaplet/seed sync || true) && npx supabase gen types --linked > src/types/supabase.ts"
+   },
+   "dependencies": {
+      "@fastify/cookie": "^11.0.2",
+      "@fastify/cors": "^11.0.1",
+      "@prisma/client": "^6.5.0",
+      "@supabase/supabase-js": "^2.49.4",
+      "dotenv": "^16.4.7",
+      "fastify": "^5.2.2",
+      "jose": "^6.0.10"
+   },
+   "devDependencies": {
+      "@types/jsonwebtoken": "^9.0.9",
+      "@types/node": "^22.14.0",
+      "nodemon": "^3.1.9",
+      "prisma": "^6.5.0",
+      "tsx": "^4.19.3",
+      "typescript": "^5.8.2"
+   }
+}
