@@ -1,13 +1,13 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  mongo:
-    image: mongo:6
-    container_name: ecobuddy-mongo
+  backend:
+    build: .
     ports:
-      - '27017:27017'
+      - "3001:3001"
     volumes:
-      - mongo_data:/data/db
-
-volumes:
-  mongo_data:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    command: npm run dev
