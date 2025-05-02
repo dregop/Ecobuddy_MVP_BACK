@@ -23,6 +23,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   impacts   Impact[]
+  dailyImpacts  DailyImpact[]
 }
 
 model Impact {
@@ -34,4 +35,14 @@ model Impact {
   createdAt       DateTime @default(now())
 
   user            User     @relation(fields: [userId], references: [id])
+}
+
+model DailyImpact {
+  id           Int      @id @default(autoincrement())
+  userId       String
+  dailyImpact  Float
+  impactDelta  Float?
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id])
 }

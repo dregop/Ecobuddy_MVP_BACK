@@ -9,6 +9,7 @@ import { verifyJwt } from './plugins/verifyJwt';
 import cookie from '@fastify/cookie';
 import { jwtVerify } from 'jose';
 import { prisma } from './services/prisma';
+import dailyImpactRoutes from './routes/dailyImpact';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ fastify.decorate('supabase', supabase);
 
 // routes
 fastify.register(impactRoutes, { prefix: '/impact' });
+fastify.register(dailyImpactRoutes, { prefix: '/daily-impact' });
 fastify.register(userRoutes, { prefix: '/user' });
 
 fastify.get('/', async () => {
