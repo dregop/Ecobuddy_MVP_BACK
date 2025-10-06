@@ -51,5 +51,4 @@ export default async function impactRoutes(fastify: FastifyInstance) {
 
     return reply.send(impact);
   });
-
 }

@@ -19,11 +19,20 @@ Ce projet est une API construite avec **Fastify**, **Prisma** et **Supabase**. I
 │ │ ├── routes.ts
 │ │ └── service.ts
 │ ├── services/ # Services métiers (peuvent être transversaux)
+│   └── rag/
+│       ├── ingestion.service.ts   ✅ logique d’ingestion
+│       ├── embedding.service.ts   ✅ appel OpenAI
+│       └── utils.ts               ✅ chunking / tokenisation
 │ ├── prisma/ # Fichiers liés à Prisma (schema, client)
 │ ├── utils/ # Fonctions utilitaires
 │ ├── types/ # Types globaux TS
 │ └── middlewares/ # Middlewares Fastify (auth, logger, etc.)
-│
+├── scripts/
+│   └── ingest-pdf.ts              ✅ script d’entrée
+├── assets/
+│   └── pdfs/
+│       ├── ipcc-ar6.pdf
+│       └── unep-2024.pdf
 ├── .env # Variables d’environnement
 ├── package.json
 ├── tsconfig.json
@@ -76,3 +85,26 @@ npm run dev
 - Frontend : http://localhost:3000
 - Backend : http://localhost:8000
 - Supabase Studio : http://localhost:54323/
+
+2. 🧠 Convertir en vector manuellement dans Supabase
+Une fois la table créée, tu dois modifier la colonne en SQL dans Supabase (ou Postgres local) pour la convertir en vector natif :
+
+sql
+Copier
+Modifier
+-- exemple pour une taille de 1536 dimensions
+alter table "RagChunk"
+alter column embedding
+type vector(1536)
+using embedding::vector;
+⚠️ Cette commande :
+
+change le type SQL en vector
+
+dit à Postgres de caster l’ancien tableau float8[] en vector
+
+3. ✅ Tu peux maintenant indexer
+sql
+Copier
+Modifier
+create index on "RagChunk" using ivfflat (embedding vector_cosine_ops) with (lists = 100);

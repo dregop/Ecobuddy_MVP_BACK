@@ -1,13 +1,15 @@
+// middleware/verifyJwt.ts
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { jwtVerify } from 'jose';
 
 export async function verifyJwt(request: FastifyRequest, reply: FastifyReply) {
-  const token = request.cookies?.token;
+  const authHeader = request.headers.authorization;
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-  console.log('[verifyJwt] Token extrait du cookie :', token ?? '(aucun)');
+  console.log('[verifyJwt] Token extrait du header Authorization :', token ?? '(aucun)');
 
   if (!token) {
-    console.warn('[verifyJwt] Aucun token trouvé dans les cookies.');
+    console.warn('[verifyJwt] Aucun token fourni.');
     return reply.status(401).send({ error: 'Missing token' });
   }
 

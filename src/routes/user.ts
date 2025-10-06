@@ -1,9 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../services/prisma';
 import supabase from '../services/supabase';
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 import { verifyJwt } from '../plugins/verifyJwt';
-import { jwtVerify } from 'jose';
 
 dotenv.config();
 
@@ -18,50 +17,50 @@ export default async function userRoutes(fastify: FastifyInstance) {
       answers: Record<string, any>;
     };
 
-  // 1. Crée d'abord le user dans Supabase Auth
-  const { data, error: createError } = await supabase.auth.admin.createUser({
-    email,
-    email_confirm: false,
-  });
-
-  if (createError && createError.message !== 'User already registered') {
-    return reply.code(400).send({ error: createError.message });
-  }
-
-  // 2. Enregistre dans Prisma avec le même ID que Supabase
-  const user = await prisma.user.upsert({
-    where: { id: data.user?.id },
-    update: { pseudo },
-    create: {
-      id: data.user?.id,
+    // 1. Crée d'abord le user dans Supabase Auth
+    const { data, error: createError } = await supabase.auth.admin.createUser({
       email,
-      pseudo,
-    },
-  });
+      email_confirm: false,
+    });
 
-  // 3. Envoie le lien magique avec redirect
-  const { error: otpError } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${process.env.FRONT_URL}`,
-    },
-  });
+    if (createError && createError.message !== 'User already registered') {
+      return reply.code(400).send({ error: createError.message });
+    }
 
-  if (otpError) {
-    return reply.code(400).send({ error: otpError.message });
-  }
-
-  // 4 Enregistre aussi l'impact si présent
-  if (answers && totalImpact) {
-    await prisma.impact.create({
-      data: {
-        userId: user.id,
-        totalImpact,
-        categoryDetails,
-        answers,
+    // 2. Enregistre dans Prisma avec le même ID que Supabase
+    const user = await prisma.user.upsert({
+      where: { id: data.user?.id },
+      update: { pseudo },
+      create: {
+        id: data.user?.id,
+        email,
+        pseudo,
       },
     });
-  }
+
+    // 3. Envoie le lien magique avec redirect
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${process.env.FRONT_URL}`,
+      },
+    });
+
+    if (otpError) {
+      return reply.code(400).send({ error: otpError.message });
+    }
+
+    // 4 Enregistre aussi l'impact si présent
+    if (answers && totalImpact) {
+      await prisma.impact.create({
+        data: {
+          userId: user.id,
+          totalImpact,
+          categoryDetails,
+          answers,
+        },
+      });
+    }
 
     return reply.code(200).send({ message: 'Invitation sent!' });
   });
@@ -75,11 +74,11 @@ export default async function userRoutes(fastify: FastifyInstance) {
     const user = request.user; // issu du JWT via verifyJwt
     if (!user) return reply.status(401).send({ error: 'Non authentifié' });
 
-  if (password.length < 6) {
-    return reply.status(400).send({
-      error: 'Le mot de passe doit contenir au moins 6 caractères.',
-    });
-  }
+    if (password.length < 6) {
+      return reply.status(400).send({
+        error: 'Le mot de passe doit contenir au moins 6 caractères.',
+      });
+    }
 
     // 1. Définir le mot de passe via l'API admin
     const { error: updateError } = await supabase.auth.admin.updateUserById(user.sub, {
@@ -103,7 +102,6 @@ export default async function userRoutes(fastify: FastifyInstance) {
     return reply.send({ message: 'Compte activé avec succès' });
   });
 
-
   // POST /user/login
   fastify.post('/login', async (request, reply) => {
     const { email, password } = request.body as {
@@ -112,10 +110,12 @@ export default async function userRoutes(fastify: FastifyInstance) {
     };
 
     // Vérifie si le compte est activé
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user?.activated) {
-    return reply.code(401).send({ error: 'Merci de valider votre compte via le lien reçu par email.' });
-  }
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user?.activated) {
+      return reply
+        .code(401)
+        .send({ error: 'Merci de valider votre compte via le lien reçu par email.' });
+    }
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -129,25 +129,19 @@ export default async function userRoutes(fastify: FastifyInstance) {
 
     const { access_token } = data.session;
 
-    reply.setCookie('token', access_token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 // 1h
-    });
-
-    console.log('[COOKIE] Token envoyé au client via cookie:', access_token);
+    console.log('[LOGIN] Token envoyé dans le corps de la réponse :', access_token);
 
     return reply.send({
-      session: data.session,
-      user: data.user,
+      token: access_token,
+      user: {
+        email: data.user.email,
+        pseudo: user.pseudo, // récupéré depuis ta base locale
+      },
     });
   });
 
   // POST /user/logout
   fastify.post('/logout', async (request, reply) => {
-  reply.clearCookie('token', { path: '/' });
-  return reply.send({ success: true });
-});
+    return reply.send({ success: true });
+  });
 }

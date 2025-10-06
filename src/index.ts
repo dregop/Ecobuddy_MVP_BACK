@@ -10,6 +10,7 @@ import cookie from '@fastify/cookie';
 import { jwtVerify } from 'jose';
 import { prisma } from './services/prisma';
 import dailyImpactRoutes from './routes/dailyImpact';
+import ragRoutes from './routes/rag';
 
 dotenv.config();
 
@@ -20,7 +21,6 @@ await fastify.register(cors, {
   credentials: true,
 });
 
-
 await fastify.register(cookie);
 
 fastify.decorate('supabase', supabase);
@@ -29,6 +29,7 @@ fastify.decorate('supabase', supabase);
 fastify.register(impactRoutes, { prefix: '/impact' });
 fastify.register(dailyImpactRoutes, { prefix: '/daily-impact' });
 fastify.register(userRoutes, { prefix: '/user' });
+fastify.register(ragRoutes, { prefix: '/ask' })
 
 fastify.get('/', async () => {
   return { status: 'EcoBuddy backend is running' };
@@ -66,7 +67,6 @@ fastify.get('/auth/callback', async (request, reply) => {
   }
 });
 
-
 fastify.get('/me', { preHandler: verifyJwt }, async (request, reply) => {
   const email = request.user?.email;
 
@@ -86,7 +86,7 @@ fastify.get('/me', { preHandler: verifyJwt }, async (request, reply) => {
   if (!user) {
     return reply.code(404).send({ error: 'Utilisateur introuvable' });
   }
-  
+
   console.log('[ME] Utilisateur récupéré :', user);
   return { user };
 });

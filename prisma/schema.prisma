@@ -46,3 +46,14 @@ model DailyImpact {
 
   user         User     @relation(fields: [userId], references: [id])
 }
+
+model RagChunk {
+  id         String   @id @default(cuid())
+  source     String
+  sourceUrl  String
+  title      String
+  text       String
+  embedding  Unsupported("vector(1536)")
+  language   String   @default("fr")
+  createdAt  DateTime @default(now())
+}
